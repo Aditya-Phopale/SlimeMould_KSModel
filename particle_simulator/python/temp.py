@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-import copy
 import os
 from matplotlib.animation import FuncAnimation
 
@@ -9,7 +8,7 @@ from matplotlib.animation import FuncAnimation
 dt = 0.5  # Time step
 dx = 1.0  # Spatial step
 T = 100.0  # Total simulation time
-D = 0.95  # Diffusion coefficient
+D = 1.6  # Diffusion coefficient
 k = 1000  # Chemotactic sensitivity
 chemo_source = (50, 50)  # Location of chemoattractant source
 # Get the absolute path of the directory containing the current script
@@ -18,7 +17,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 output_folder_position = os.path.join(script_directory, 'scatter_plots')
 output_folder_concentration = os.path.join(script_directory, 'concentration')
 # Parameters for controlling Post processing
-PLOT_POSITIONS = False
+PLOT_POSITIONS = True
 PLOT_CONCENTRATION = False
 MAKE_GIF = True
 
@@ -26,7 +25,7 @@ MAKE_GIF = True
 grid_size = 100
 
 
-def make_gif(output_folder):
+def make_gif(output_folder, gif_name="output_file"):
     print("Generating Animation...")
     # Get the list of image files in the directory
     try:
@@ -35,7 +34,7 @@ def make_gif(output_folder):
         # Sort the images based on time steps
         images.sort(key=lambda x: float(x.split('_')[1].split('.jpg')[0]))
     except:
-        assert "Folder doesnt exist or images are not plotted."
+        assert f"Attempting to make gif when folder {output_folder} doesnt exist or images are not plotted."
 
     def update(frame):
         plt.clf()  # Clear the previous plot
@@ -54,21 +53,18 @@ def make_gif(output_folder):
         images), interval=200, blit=False)
 
     # Specify the name of the output animation file
-    animation_file = 'output_animation.gif'
+    animation_file = gif_name + ".gif"
 
     # Save the animation
     animation.save(animation_file, writer='pillow')
 
 
 def update_bacteria_position(current_concentration, bacteria_positions):
-    # print(current_concentration)
-    bacteria_positions_updated = []
     for x, y in bacteria_positions:
-        # print(x, y)
-        gradient_x = -(current_concentration[(x + 1) %
-                                             grid_size, y] - current_concentration[x, y]) / dx
-        gradient_y = -(current_concentration[x, (y + 1) %
-                                             grid_size] - current_concentration[x, y]) / dx
+        gradient_x = (current_concentration[(x + 1) %
+                                            grid_size, y] - current_concentration[x, y]) / dx
+        gradient_y = (current_concentration[x, (y + 1) %
+                                            grid_size] - current_concentration[x, y]) / dx
         move_x = k * gradient_x
         move_y = k * gradient_y
         xold = x
@@ -159,16 +155,16 @@ def simulate(concentration, bacteria_positions):
 
 
 if __name__ == '__main__':
-    #initialization
+    # initialization
     concentration = np.zeros((grid_size, grid_size))
     concentration[50, 50] = 1
     bacteria = [(random.randint(0, grid_size - 1),
                  random.randint(0, grid_size - 1)) for _ in range(100)]
-    #main simulation
+    # main simulation
     simulate(concentration, bacteria)
-    #Postprocessing
+    # Postprocessing
     if MAKE_GIF is True:
         if PLOT_POSITIONS:
-            make_gif(output_folder_position)
-        if PLOT_CONCENTRATION:    
-            make_gif(output_folder_concentration)
+            make_gif(output_folder_position, "position")
+        if PLOT_CONCENTRATION:
+            make_gif(output_folder_concentration, "concentration_gradient")
