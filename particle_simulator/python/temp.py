@@ -4,12 +4,19 @@ import random
 import os
 from matplotlib.animation import FuncAnimation
 
+
+# TODO: Parallelize the code
+# TODO: Case studies with different initializations
+# TODO: Find the simulation D value limit
+
 # Parameters for controlling simulation
-dt = 0.5  # Time step
-dx = 1.0  # Spatial step
-T = 100.0  # Total simulation time
-D = 1.6  # Diffusion coefficient
-k = 1000  # Chemotactic sensitivity
+dt = 0.01  # Time step
+dx = 0.01  # Spatial step
+T = 50.0  # Total simulation time
+D = 0.001  # Diffusion coefficient
+k = 0  # Chemotactic sensitivity
+f = 0 # Release coefficient
+
 chemo_source = (50, 50)  # Location of chemoattractant source
 # Get the absolute path of the directory containing the current script
 script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -17,9 +24,9 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 output_folder_position = os.path.join(script_directory, 'scatter_plots')
 output_folder_concentration = os.path.join(script_directory, 'concentration')
 # Parameters for controlling Post processing
-PLOT_POSITIONS = True
+PLOT_POSITIONS = False
 PLOT_CONCENTRATION = False
-MAKE_GIF = True
+MAKE_GIF = False
 
 # Grid size and initialization
 grid_size = 100
@@ -61,23 +68,14 @@ def make_gif(output_folder, gif_name="output_file"):
 
 def update_bacteria_position(current_concentration, bacteria_positions):
     for x, y in bacteria_positions:
-        gradient_x = (current_concentration[(x + 1) %
-                                            grid_size, y] - current_concentration[x, y]) / dx
-        gradient_y = (current_concentration[x, (y + 1) %
-                                            grid_size] - current_concentration[x, y]) / dx
-        move_x = k * gradient_x
-        move_y = k * gradient_y
-        xold = x
-        yold = y
-        x += int(move_x * dt)
-        y += int(move_y * dt)
-        x = x % grid_size
-        y = y % grid_size
-        if x < 100 and y < 100:
-            bacteria_positions.append((x, y))
-            bacteria_positions.remove((xold, yold))
+        newx, newy = (x + np.random.randint(-1, 2)
+                      ) % grid_size, (y + np.random.randint(-1, 2)) % grid_size
+        diff = (current_concentration[newx, newy] -
+                current_concentration[x, y]) / 0.1
+        if random.random() < np.exp(diff) / (1 + np.exp(diff)):
+            bacteria_positions.remove((x, y))
+            bacteria_positions.append((newx, newy))
     return bacteria_positions
-
 
 def plot_concentration_field(concentration, output_folder_concentration, t):
     os.makedirs(output_folder_concentration, exist_ok=True)
@@ -119,6 +117,14 @@ def plot_positions(bacteria, t):
     # plt.show()
 
 
+def add_secretion(concentration, bacteria_position):
+    for x in range(grid_size):
+        for y in range(grid_size):
+            if (x, y) in bacteria_position:
+                concentration[x, y] += f*dt
+    return concentration
+
+
 def update_concentration(concentration):
     new_concentration = np.zeros((grid_size, grid_size))
     for x in range(grid_size):
@@ -127,7 +133,8 @@ def update_concentration(concentration):
                          + concentration[x, (y + 1) % grid_size] +
                          concentration[x, (y - 1) % grid_size]
                          - 4 * concentration[x, y]) / (dx ** 2)
-            new_concentration[x, y] = concentration[x, y] + D * laplacian * dt
+            new_concentration[x, y] = concentration[x, y] + \
+                D * laplacian * dt - k * concentration[x, y]
     new_concentration[50, 50] = 1
     return new_concentration
 
@@ -143,12 +150,17 @@ def simulate(concentration, bacteria_positions):
     print("Starting Simulation:\n")
     for t in np.arange(0, T, dt):
         print("Time step: ", int(t/dt))
+        # Update bacteria by concentration
         bacteria_positions = update_bacteria_position(
             concentration, bacteria_positions)
+        # Plot bacteria positions
         if PLOT_POSITIONS:
             plot_positions(bacteria_positions, t)
+        # Change concentration
         concentration = update_concentration(
             concentration)
+        concentration = add_secretion(concentration, bacteria_positions)
+        # Plot changing concentrations
         if PLOT_CONCENTRATION:
             plot_concentration_field(
                 concentration, output_folder_concentration, t)
