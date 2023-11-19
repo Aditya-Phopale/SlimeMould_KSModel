@@ -12,10 +12,10 @@ from matplotlib.animation import FuncAnimation
 # Parameters for controlling simulation
 dt = 0.01  # Time step
 dx = 0.01  # Spatial step
-T = 50.0  # Total simulation time
+T = 20.0  # Total simulation time
 D = 0.001  # Diffusion coefficient
 k = 0  # Chemotactic sensitivity
-f = 0 # Release coefficient
+f = 0  # Release coefficient
 
 chemo_source = (50, 50)  # Location of chemoattractant source
 # Get the absolute path of the directory containing the current script
@@ -27,7 +27,7 @@ output_folder_concentration = os.path.join(script_directory, 'concentration')
 PLOT_POSITIONS = False
 PLOT_CONCENTRATION = False
 MAKE_GIF = False
-
+N_AGENTS = 500
 # Grid size and initialization
 grid_size = 100
 
@@ -76,6 +76,7 @@ def update_bacteria_position(current_concentration, bacteria_positions):
             bacteria_positions.remove((x, y))
             bacteria_positions.append((newx, newy))
     return bacteria_positions
+
 
 def plot_concentration_field(concentration, output_folder_concentration, t):
     os.makedirs(output_folder_concentration, exist_ok=True)
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     concentration = np.zeros((grid_size, grid_size))
     concentration[50, 50] = 1
     bacteria = [(random.randint(0, grid_size - 1),
-                 random.randint(0, grid_size - 1)) for _ in range(100)]
+                 random.randint(0, grid_size - 1)) for _ in range(N_AGENTS)]
     # main simulation
     simulate(concentration, bacteria)
     # Postprocessing
