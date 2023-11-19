@@ -91,7 +91,7 @@ def plot_concentration_field(concentration, output_folder_concentration, t):
 
 def plot_positions(bacteria, t):
     assert len(
-        bacteria) == 100, "Number of bacteria decreased. Bacteria are dying!"
+        bacteria) == N_AGENTS, "Number of bacteria decreased. Bacteria are dying!"
     os.makedirs(output_folder_position, exist_ok=True)
     # Create a scatter plot
     # Unpack the pairs into separate lists for x and y coordinates
