@@ -10,11 +10,11 @@ from matplotlib.animation import FuncAnimation
 # TODO: Find the simulation D value limit
 
 # Parameters for controlling simulation
-dt = 0.02  # Time step
+dt = 0.004  # Time step
 dx = 0.01  # Spatial step
 T = 20.0  # Total simulation time
-D = 0.001  # Diffusion coefficient
-k = 1  # Chemotactic sensitivity
+D = 0.005 # Diffusion coefficient
+k = 0  # Chemotactic sensitivity
 f = 1  # Release coefficient
 
 chemo_source = (50, 50)  # Location of chemoattractant source
@@ -25,8 +25,8 @@ output_folder_position = os.path.join(script_directory, 'scatter_plots')
 output_folder_concentration = os.path.join(script_directory, 'concentration')
 # Parameters for controlling Post processing
 PLOT_POSITIONS = True
-PLOT_CONCENTRATION = False
-MAKE_GIF = False
+PLOT_CONCENTRATION = True
+MAKE_GIF = True
 N_AGENTS = 500
 # Grid size and initialization
 grid_size = 100
@@ -182,4 +182,5 @@ if __name__ == '__main__':
             make_gif(output_folder_position, "position")
         if PLOT_CONCENTRATION:
             make_gif(output_folder_concentration, "concentration_gradient")
-    # make_gif(output_folder_position, "position")
+    make_gif(output_folder_position, "position")
+    make_gif(output_folder_concentration, "concentration_gradient")
