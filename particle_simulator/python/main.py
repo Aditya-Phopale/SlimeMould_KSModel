@@ -12,8 +12,8 @@ from matplotlib.animation import FuncAnimation
 # Parameters for controlling simulation
 dt = 0.004  # Time step
 dx = 0.01  # Spatial step
-T = 20.0  # Total simulation time
-D = 0.005 # Diffusion coefficient
+T = 8.0  # Total simulation time
+D = 0.005  # Diffusion coefficient
 k = 0  # Chemotactic sensitivity
 f = 1  # Release coefficient
 
@@ -25,9 +25,9 @@ output_folder_position = os.path.join(script_directory, 'scatter_plots')
 output_folder_concentration = os.path.join(script_directory, 'concentration')
 # Parameters for controlling Post processing
 PLOT_POSITIONS = True
-PLOT_CONCENTRATION = True
-MAKE_GIF = True
-N_AGENTS = 500
+PLOT_CONCENTRATION = False
+MAKE_GIF = False
+N_AGENTS = 10
 # Grid size and initialization
 grid_size = 100
 
@@ -66,7 +66,7 @@ def make_gif(output_folder, gif_name="output_file"):
     animation.save(animation_file, writer='pillow')
 
 
-def update_bacteria_position(current_concentration, bacteria_positions):
+def update_bacteria_position(current_concentration, bacteria_positions, iteration_num = None):
     for x, y in bacteria_positions:
         newx, newy = (x + np.random.randint(-1, 2)
                       ) % grid_size, (y + np.random.randint(-1, 2)) % grid_size
@@ -75,6 +75,20 @@ def update_bacteria_position(current_concentration, bacteria_positions):
         if random.random() < np.exp(diff) / (1 + np.exp(diff)):
             bacteria_positions.remove((x, y))
             bacteria_positions.append((newx, newy))
+        else:
+            # Random exploration - generate random position and append it
+            peak_height = 1
+            peak_location = 0
+            denominator = 1e6
+            probability_of_randomness = peak_height * np.exp(-((iteration_num - peak_location) ** 2) / denominator)
+            if probability_of_randomness > random.random():
+                bacteria_positions.remove((x, y))
+                x_offset = np.random.randint(-2, 3)
+                y_offset = np.random.randint(-2, 3)
+                newx, newy = (x + x_offset
+                            ) % grid_size, (y + y_offset) % grid_size
+                bacteria_positions.append((newx, newy))
+
     return bacteria_positions
 
 
@@ -137,7 +151,7 @@ def update_concentration(concentration):
                          - 4 * concentration[x, y]) / (dx ** 2)
             new_concentration[x, y] = concentration[x, y] + \
                 D * laplacian * dt - k * concentration[x, y] * dt
-    new_concentration[50, 50] = 1
+    # new_concentration[50, 50] = 1
     return new_concentration
 
 
